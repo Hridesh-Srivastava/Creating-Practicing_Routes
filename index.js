@@ -83,8 +83,8 @@ app.delete("/jokes/:id" , (req , res) => {
   const searchIndex = jokes.findIndex((joke) => {
     return joke.id === id;
   });
-  if(searchIndex > -1){
-      jokes.splice(searchIndex , 1);
+  if(searchIndex > -1){ //means from 0 i.e. inside the array (if user specifies the indexing of array.)
+      jokes.splice(searchIndex , 1); // at specified user searchIndex remove 1 value (means del. specific joke)
       res.sendStatus(200);
   }
   else{
