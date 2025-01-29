@@ -2,7 +2,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 const masterKey = "4VGP2DN-6EWM4SJ-N6FGRHV-Z3PR3TT";
@@ -684,4 +684,6 @@ let jokes = [
     jokeText: "What do you call fake spaghetti? An impasta!",
     jokeType: "Food",
   },
-]
+];
+
+export default app;

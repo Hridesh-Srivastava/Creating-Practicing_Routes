@@ -8,8 +8,26 @@
     ],
     "routes": [
       {
+        "src": "/random",
+        "dest": "index.js"
+      },
+      {
+        "src": "/jokes/(.*)",
+        "dest": "index.js"
+      },
+      {
+        "src": "/filter",
+        "dest": "index.js"
+      },
+      {
+        "src": "/all",
+        "dest": "index.js"
+      },
+      {
         "src": "/(.*)",
         "dest": "index.js"
       }
     ]
   }
+  
+  
