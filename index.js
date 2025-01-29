@@ -1,147 +1,160 @@
-import express from 'express';
-import bodyParser from 'body-parser';
+import express from "express"
+import bodyParser from "body-parser"
 
-const app = express();
-const port = process.env.PORT || 3000;
+const app = express()
+const port = process.env.PORT || 3000
 
-app.use(bodyParser.urlencoded({ extended: true }));
-const masterKey = "4VGP2DN-6EWM4SJ-N6FGRHV-Z3PR3TT";
+// Add JSON body parser
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true }))
 
-//get a random joke 
-app.get("/random" , (req , res) => {
-  const joke = Math.random() * jokes.length;
-  let randomJoke = Math.floor(joke);
-  res.json(jokes[randomJoke]); //converting (to see) the JS object to JSON.
-});
+const masterKey = "4VGP2DN-6EWM4SJ-N6FGRHV-Z3PR3TT"
+
+// Add root route handler
+app.get("/", (req, res) => {
+  res.json({
+    message: "Welcome to the Jokes API",
+    endpoints: {
+      random: "/random",
+      specific: "/jokes/:id",
+      filter: "/filter?type=Science",
+    },
+  })
+})
+
+//get a random joke
+app.get("/random", (req, res) => {
+  const joke = Math.random() * jokes.length
+  const randomJoke = Math.floor(joke)
+  res.json(jokes[randomJoke])
+})
 
 //get a specific joke
-app.get("/jokes/:id" , (req , res) => {
-    const id = parseInt(req.params.id);
-    const findJoke = jokes.find((joke) => {
-      return joke.id === id;
-    });
-    res.json(findJoke);
-});
+app.get("/jokes/:id", (req, res) => {
+  const id = Number.parseInt(req.params.id)
+  const findJoke = jokes.find((joke) => {
+    return joke.id === id
+  })
+  res.json(findJoke)
+})
 
 //filter jokes by type
-app.get("/filter" , (req , res) => {
-  const type = req.query.type;
+app.get("/filter", (req, res) => {
+  const type = req.query.type
   const filterJokes = jokes.filter((joke) => {
-    return joke.jokeType === type;
-  });
-  res.json(filterJokes);
-});
+    return joke.jokeType === type
+  })
+  res.json(filterJokes)
+})
 
 //post a new joke
-app.post("/jokes" , (req , res) => {
+app.post("/jokes", (req, res) => {
   const newJoke = {
-    id : jokes.length + 1,
-    jokeText : req.body.type,
-    jokeType : req.body.text
-  };
-  jokes.push(newJoke);
-  console.log(jokes.slice(-1)); //remove the last item from array (show krne k liye ki ye item dala tha remove kia).
-  res.json(newJoke);
-});
+    id: jokes.length + 1,
+    jokeText: req.body.type,
+    jokeType: req.body.text,
+  }
+  jokes.push(newJoke)
+  console.log(jokes.slice(-1)) //remove the last item from array (show krne k liye ki ye item dala tha remove kia).
+  res.json(newJoke)
+})
 
 //put a joke
-app.put("/jokes/:id" , (req , res) => {
-    const id = parseInt(req.params.id);
-    const replaceJoke = {
-      id : id,
-      jokeText : req.body.text,
-      jokeType : req.body.type
-    };
+app.put("/jokes/:id", (req, res) => {
+  const id = Number.parseInt(req.params.id)
+  const replaceJoke = {
+    id: id,
+    jokeText: req.body.text,
+    jokeType: req.body.type,
+  }
 
-    const searchIndex = jokes.findIndex((joke) => {
-      return joke.id === id;
-    });
-    jokes[searchIndex] = replaceJoke;
-    res.json(replaceJoke);
-});
+  const searchIndex = jokes.findIndex((joke) => {
+    return joke.id === id
+  })
+  jokes[searchIndex] = replaceJoke
+  res.json(replaceJoke)
+})
 
 //patch a joke
-app.patch("/jokes/:id" , (req , res) => {
-  const id = parseInt(req.params.id);
-  const existingJoke = jokes.find((joke) => joke.id === id);
+app.patch("/jokes/:id", (req, res) => {
+  const id = Number.parseInt(req.params.id)
+  const existingJoke = jokes.find((joke) => joke.id === id)
   const replaceJoke = {
-    id : id,
-    jokeText : req.body.text || existingJoke.jokeText,
-    jokeType : req.body.type || existingJoke.jokeType
-  };
+    id: id,
+    jokeText: req.body.text || existingJoke.jokeText,
+    jokeType: req.body.type || existingJoke.jokeType,
+  }
 
   const searchIndex = jokes.findIndex((joke) => {
-    return joke.id === id;
-  });
-  jokes[searchIndex] = replaceJoke;
-  res.json(replaceJoke);
-});
+    return joke.id === id
+  })
+  jokes[searchIndex] = replaceJoke
+  res.json(replaceJoke)
+})
 
 //delete a specific joke and use basic auth.
-app.delete("/jokes/:id" , (req , res) => {
-  const id = parseInt(req.params.id);
+app.delete("/jokes/:id", (req, res) => {
+  const id = Number.parseInt(req.params.id)
   const searchIndex = jokes.findIndex((joke) => {
-    return joke.id === id;
-  });
-  if(searchIndex > -1){ //means from 0 i.e. inside the array (if user specifies the indexing of array.)
-      jokes.splice(searchIndex , 1); // at specified user searchIndex remove 1 value (means del. specific joke)
-      res.sendStatus(200);
-  }
-  else{
+    return joke.id === id
+  })
+  if (searchIndex > -1) {
+    //means from 0 i.e. inside the array (if user specifies the indexing of array.)
+    jokes.splice(searchIndex, 1) // at specified user searchIndex remove 1 value (means del. specific joke)
+    res.sendStatus(200)
+  } else {
     res.status(404).json({
-      error : `the joke with joke id ${id} does not found.`
-    });
+      error: `the joke with joke id ${id} does not found.`,
+    })
   }
-});
+})
 
 //delete all jokes use API key Authentication.
-app.delete("/all" , (req , res) => {
-  const userKey = req.query.key;
-  if(userKey===masterKey){
-    jokes = [];
-    res.sendStatus(200);
+app.delete("/all", (req, res) => {
+  const userKey = req.query.key
+  if (userKey === masterKey) {
+    jokes = []
+    res.sendStatus(200)
+  } else {
+    res.status(404).json({
+      error: `Unable to complete the request.`,
+    })
   }
-  else{
-    res.status(404).json(
-      {
-        error : `Unable to complete the request.`
-      }
-    );
-  }
-});
-app.listen(port , () => {
-    console.log(`Server is running on port ${port}`);
-});
+})
+
+// Error handling middleware
+app.use((req, res) => {
+  res.status(404).json({ error: "Route not found" })
+})
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`)
+})
 
 let jokes = [
-     {
+  {
     id: 1,
-    jokeText:
-      "Why don't scientists trust atoms? Because they make up everything.",
+    jokeText: "Why don't scientists trust atoms? Because they make up everything.",
     jokeType: "Science",
   },
   {
     id: 2,
-    jokeText:
-      "Why did the scarecrow win an award? Because he was outstanding in his field.",
+    jokeText: "Why did the scarecrow win an award? Because he was outstanding in his field.",
     jokeType: "Puns",
   },
   {
     id: 3,
-    jokeText:
-      "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+    jokeText: "I told my wife she was drawing her eyebrows too high. She looked surprised.",
     jokeType: "Puns",
   },
   {
     id: 4,
-    jokeText:
-      "What did one ocean say to the other ocean? Nothing, they just waved.",
+    jokeText: "What did one ocean say to the other ocean? Nothing, they just waved.",
     jokeType: "Wordplay",
   },
   {
     id: 5,
-    jokeText:
-      "Why do we never tell secrets on a farm? Because the potatoes have eyes and the corn has ears.",
+    jokeText: "Why do we never tell secrets on a farm? Because the potatoes have eyes and the corn has ears.",
     jokeType: "Wordplay",
   },
   {
@@ -151,14 +164,12 @@ let jokes = [
   },
   {
     id: 7,
-    jokeText:
-      "Why don't some couples go to the gym? Because some relationships don't work out.",
+    jokeText: "Why don't some couples go to the gym? Because some relationships don't work out.",
     jokeType: "Puns",
   },
   {
     id: 8,
-    jokeText:
-      "Parallel lines have so much in common. It's a shame they'll never meet.",
+    jokeText: "Parallel lines have so much in common. It's a shame they'll never meet.",
     jokeType: "Math",
   },
   {
@@ -173,20 +184,17 @@ let jokes = [
   },
   {
     id: 11,
-    jokeText:
-      "What do you get when you cross a snowman and a vampire? Frostbite!",
+    jokeText: "What do you get when you cross a snowman and a vampire? Frostbite!",
     jokeType: "Wordplay",
   },
   {
     id: 12,
-    jokeText:
-      "Why did the golfer bring two pairs of pants? In case he got a hole in one!",
+    jokeText: "Why did the golfer bring two pairs of pants? In case he got a hole in one!",
     jokeType: "Sports",
   },
   {
     id: 13,
-    jokeText:
-      "Why are ghosts bad at lying? Because you can see right through them!",
+    jokeText: "Why are ghosts bad at lying? Because you can see right through them!",
     jokeType: "Wordplay",
   },
   {
@@ -196,26 +204,22 @@ let jokes = [
   },
   {
     id: 15,
-    jokeText:
-      "I'm reading a book about anti-gravity. It's impossible to put down!",
+    jokeText: "I'm reading a book about anti-gravity. It's impossible to put down!",
     jokeType: "Science",
   },
   {
     id: 16,
-    jokeText:
-      "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+    jokeText: "I told my wife she was drawing her eyebrows too high. She looked surprised.",
     jokeType: "Puns",
   },
   {
     id: 17,
-    jokeText:
-      "What did one ocean say to the other ocean? Nothing, they just waved.",
+    jokeText: "What did one ocean say to the other ocean? Nothing, they just waved.",
     jokeType: "Wordplay",
   },
   {
     id: 18,
-    jokeText:
-      "Why do we never tell secrets on a farm? Because the potatoes have eyes and the corn has ears.",
+    jokeText: "Why do we never tell secrets on a farm? Because the potatoes have eyes and the corn has ears.",
     jokeType: "Wordplay",
   },
   {
@@ -225,14 +229,12 @@ let jokes = [
   },
   {
     id: 20,
-    jokeText:
-      "Why don't some couples go to the gym? Because some relationships don't work out.",
+    jokeText: "Why don't some couples go to the gym? Because some relationships don't work out.",
     jokeType: "Puns",
   },
   {
     id: 21,
-    jokeText:
-      "Parallel lines have so much in common. It's a shame they'll never meet.",
+    jokeText: "Parallel lines have so much in common. It's a shame they'll never meet.",
     jokeType: "Math",
   },
   {
@@ -247,20 +249,17 @@ let jokes = [
   },
   {
     id: 24,
-    jokeText:
-      "What do you get when you cross a snowman and a vampire? Frostbite!",
+    jokeText: "What do you get when you cross a snowman and a vampire? Frostbite!",
     jokeType: "Wordplay",
   },
   {
     id: 25,
-    jokeText:
-      "Why did the golfer bring two pairs of pants? In case he got a hole in one!",
+    jokeText: "Why did the golfer bring two pairs of pants? In case he got a hole in one!",
     jokeType: "Sports",
   },
   {
     id: 26,
-    jokeText:
-      "Why are ghosts bad at lying? Because you can see right through them!",
+    jokeText: "Why are ghosts bad at lying? Because you can see right through them!",
     jokeType: "Wordplay",
   },
   {
@@ -270,26 +269,22 @@ let jokes = [
   },
   {
     id: 28,
-    jokeText:
-      "I'm reading a book about anti-gravity. It's impossible to put down!",
+    jokeText: "I'm reading a book about anti-gravity. It's impossible to put down!",
     jokeType: "Science",
   },
   {
     id: 29,
-    jokeText:
-      "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+    jokeText: "I told my wife she was drawing her eyebrows too high. She looked surprised.",
     jokeType: "Puns",
   },
   {
     id: 30,
-    jokeText:
-      "What did one ocean say to the other ocean? Nothing, they just waved.",
+    jokeText: "What did one ocean say to the other ocean? Nothing, they just waved.",
     jokeType: "Wordplay",
   },
   {
     id: 31,
-    jokeText:
-      "Why do we never tell secrets on a farm? Because the potatoes have eyes and the corn has ears.",
+    jokeText: "Why do we never tell secrets on a farm? Because the potatoes have eyes and the corn has ears.",
     jokeType: "Wordplay",
   },
   {
@@ -299,14 +294,12 @@ let jokes = [
   },
   {
     id: 33,
-    jokeText:
-      "Why don't some couples go to the gym? Because some relationships don't work out.",
+    jokeText: "Why don't some couples go to the gym? Because some relationships don't work out.",
     jokeType: "Puns",
   },
   {
     id: 34,
-    jokeText:
-      "Parallel lines have so much in common. It's a shame they'll never meet.",
+    jokeText: "Parallel lines have so much in common. It's a shame they'll never meet.",
     jokeType: "Math",
   },
   {
@@ -321,20 +314,17 @@ let jokes = [
   },
   {
     id: 37,
-    jokeText:
-      "What do you get when you cross a snowman and a vampire? Frostbite!",
+    jokeText: "What do you get when you cross a snowman and a vampire? Frostbite!",
     jokeType: "Wordplay",
   },
   {
     id: 38,
-    jokeText:
-      "Why did the golfer bring two pairs of pants? In case he got a hole in one!",
+    jokeText: "Why did the golfer bring two pairs of pants? In case he got a hole in one!",
     jokeType: "Sports",
   },
   {
     id: 39,
-    jokeText:
-      "Why are ghosts bad at lying? Because you can see right through them!",
+    jokeText: "Why are ghosts bad at lying? Because you can see right through them!",
     jokeType: "Wordplay",
   },
   {
@@ -344,26 +334,22 @@ let jokes = [
   },
   {
     id: 41,
-    jokeText:
-      "I'm reading a book about anti-gravity. It's impossible to put down!",
+    jokeText: "I'm reading a book about anti-gravity. It's impossible to put down!",
     jokeType: "Science",
   },
   {
     id: 42,
-    jokeText:
-      "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+    jokeText: "I told my wife she was drawing her eyebrows too high. She looked surprised.",
     jokeType: "Puns",
   },
   {
     id: 43,
-    jokeText:
-      "What did one ocean say to the other ocean? Nothing, they just waved.",
+    jokeText: "What did one ocean say to the other ocean? Nothing, they just waved.",
     jokeType: "Wordplay",
   },
   {
     id: 44,
-    jokeText:
-      "Why do we never tell secrets on a farm? Because the potatoes have eyes and the corn has ears.",
+    jokeText: "Why do we never tell secrets on a farm? Because the potatoes have eyes and the corn has ears.",
     jokeType: "Wordplay",
   },
   {
@@ -373,14 +359,12 @@ let jokes = [
   },
   {
     id: 46,
-    jokeText:
-      "Why don't some couples go to the gym? Because some relationships don't work out.",
+    jokeText: "Why don't some couples go to the gym? Because some relationships don't work out.",
     jokeType: "Puns",
   },
   {
     id: 47,
-    jokeText:
-      "Parallel lines have so much in common. It's a shame they'll never meet.",
+    jokeText: "Parallel lines have so much in common. It's a shame they'll never meet.",
     jokeType: "Math",
   },
   {
@@ -395,20 +379,17 @@ let jokes = [
   },
   {
     id: 50,
-    jokeText:
-      "What do you get when you cross a snowman and a vampire? Frostbite!",
+    jokeText: "What do you get when you cross a snowman and a vampire? Frostbite!",
     jokeType: "Wordplay",
   },
   {
     id: 51,
-    jokeText:
-      "Why did the golfer bring two pairs of pants? In case he got a hole in one!",
+    jokeText: "Why did the golfer bring two pairs of pants? In case he got a hole in one!",
     jokeType: "Sports",
   },
   {
     id: 52,
-    jokeText:
-      "Why are ghosts bad at lying? Because you can see right through them!",
+    jokeText: "Why are ghosts bad at lying? Because you can see right through them!",
     jokeType: "Wordplay",
   },
   {
@@ -418,26 +399,22 @@ let jokes = [
   },
   {
     id: 54,
-    jokeText:
-      "I'm reading a book about anti-gravity. It's impossible to put down!",
+    jokeText: "I'm reading a book about anti-gravity. It's impossible to put down!",
     jokeType: "Science",
   },
   {
     id: 55,
-    jokeText:
-      "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+    jokeText: "I told my wife she was drawing her eyebrows too high. She looked surprised.",
     jokeType: "Puns",
   },
   {
     id: 56,
-    jokeText:
-      "What did one ocean say to the other ocean? Nothing, they just waved.",
+    jokeText: "What did one ocean say to the other ocean? Nothing, they just waved.",
     jokeType: "Wordplay",
   },
   {
     id: 57,
-    jokeText:
-      "Why do we never tell secrets on a farm? Because the potatoes have eyes and the corn has ears.",
+    jokeText: "Why do we never tell secrets on a farm? Because the potatoes have eyes and the corn has ears.",
     jokeType: "Wordplay",
   },
   {
@@ -447,14 +424,12 @@ let jokes = [
   },
   {
     id: 59,
-    jokeText:
-      "Why don't some couples go to the gym? Because some relationships don't work out.",
+    jokeText: "Why don't some couples go to the gym? Because some relationships don't work out.",
     jokeType: "Puns",
   },
   {
     id: 60,
-    jokeText:
-      "Parallel lines have so much in common. It's a shame they'll never meet.",
+    jokeText: "Parallel lines have so much in common. It's a shame they'll never meet.",
     jokeType: "Math",
   },
   {
@@ -469,20 +444,17 @@ let jokes = [
   },
   {
     id: 63,
-    jokeText:
-      "What do you get when you cross a snowman and a vampire? Frostbite!",
+    jokeText: "What do you get when you cross a snowman and a vampire? Frostbite!",
     jokeType: "Wordplay",
   },
   {
     id: 64,
-    jokeText:
-      "Why did the golfer bring two pairs of pants? In case he got a hole in one!",
+    jokeText: "Why did the golfer bring two pairs of pants? In case he got a hole in one!",
     jokeType: "Sports",
   },
   {
     id: 65,
-    jokeText:
-      "Why are ghosts bad at lying? Because you can see right through them!",
+    jokeText: "Why are ghosts bad at lying? Because you can see right through them!",
     jokeType: "Wordplay",
   },
   {
@@ -492,26 +464,22 @@ let jokes = [
   },
   {
     id: 67,
-    jokeText:
-      "I'm reading a book about anti-gravity. It's impossible to put down!",
+    jokeText: "I'm reading a book about anti-gravity. It's impossible to put down!",
     jokeType: "Science",
   },
   {
     id: 68,
-    jokeText:
-      "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+    jokeText: "I told my wife she was drawing her eyebrows too high. She looked surprised.",
     jokeType: "Puns",
   },
   {
     id: 69,
-    jokeText:
-      "What did one ocean say to the other ocean? Nothing, they just waved.",
+    jokeText: "What did one ocean say to the other ocean? Nothing, they just waved.",
     jokeType: "Wordplay",
   },
   {
     id: 70,
-    jokeText:
-      "Why do we never tell secrets on a farm? Because the potatoes have eyes and the corn has ears.",
+    jokeText: "Why do we never tell secrets on a farm? Because the potatoes have eyes and the corn has ears.",
     jokeType: "Wordplay",
   },
   {
@@ -521,14 +489,12 @@ let jokes = [
   },
   {
     id: 72,
-    jokeText:
-      "Why don't some couples go to the gym? Because some relationships don't work out.",
+    jokeText: "Why don't some couples go to the gym? Because some relationships don't work out.",
     jokeType: "Puns",
   },
   {
     id: 73,
-    jokeText:
-      "Parallel lines have so much in common. It's a shame they'll never meet.",
+    jokeText: "Parallel lines have so much in common. It's a shame they'll never meet.",
     jokeType: "Math",
   },
   {
@@ -543,20 +509,17 @@ let jokes = [
   },
   {
     id: 76,
-    jokeText:
-      "What do you get when you cross a snowman and a vampire? Frostbite!",
+    jokeText: "What do you get when you cross a snowman and a vampire? Frostbite!",
     jokeType: "Wordplay",
   },
   {
     id: 77,
-    jokeText:
-      "Why did the golfer bring two pairs of pants? In case he got a hole in one!",
+    jokeText: "Why did the golfer bring two pairs of pants? In case he got a hole in one!",
     jokeType: "Sports",
   },
   {
     id: 78,
-    jokeText:
-      "Why are ghosts bad at lying? Because you can see right through them!",
+    jokeText: "Why are ghosts bad at lying? Because you can see right through them!",
     jokeType: "Wordplay",
   },
   {
@@ -566,26 +529,22 @@ let jokes = [
   },
   {
     id: 80,
-    jokeText:
-      "I'm reading a book about anti-gravity. It's impossible to put down!",
+    jokeText: "I'm reading a book about anti-gravity. It's impossible to put down!",
     jokeType: "Science",
   },
   {
     id: 81,
-    jokeText:
-      "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+    jokeText: "I told my wife she was drawing her eyebrows too high. She looked surprised.",
     jokeType: "Puns",
   },
   {
     id: 82,
-    jokeText:
-      "What did one ocean say to the other ocean? Nothing, they just waved.",
+    jokeText: "What did one ocean say to the other ocean? Nothing, they just waved.",
     jokeType: "Wordplay",
   },
   {
     id: 83,
-    jokeText:
-      "Why do we never tell secrets on a farm? Because the potatoes have eyes and the corn has ears.",
+    jokeText: "Why do we never tell secrets on a farm? Because the potatoes have eyes and the corn has ears.",
     jokeType: "Wordplay",
   },
   {
@@ -595,14 +554,12 @@ let jokes = [
   },
   {
     id: 85,
-    jokeText:
-      "Why don't some couples go to the gym? Because some relationships don't work out.",
+    jokeText: "Why don't some couples go to the gym? Because some relationships don't work out.",
     jokeType: "Puns",
   },
   {
     id: 86,
-    jokeText:
-      "Parallel lines have so much in common. It's a shame they'll never meet.",
+    jokeText: "Parallel lines have so much in common. It's a shame they'll never meet.",
     jokeType: "Math",
   },
   {
@@ -617,20 +574,17 @@ let jokes = [
   },
   {
     id: 89,
-    jokeText:
-      "What do you get when you cross a snowman and a vampire? Frostbite!",
+    jokeText: "What do you get when you cross a snowman and a vampire? Frostbite!",
     jokeType: "Wordplay",
   },
   {
     id: 90,
-    jokeText:
-      "Why did the golfer bring two pairs of pants? In case he got a hole in one!",
+    jokeText: "Why did the golfer bring two pairs of pants? In case he got a hole in one!",
     jokeType: "Sports",
   },
   {
     id: 91,
-    jokeText:
-      "Why are ghosts bad at lying? Because you can see right through them!",
+    jokeText: "Why are ghosts bad at lying? Because you can see right through them!",
     jokeType: "Wordplay",
   },
   {
@@ -640,26 +594,22 @@ let jokes = [
   },
   {
     id: 93,
-    jokeText:
-      "I'm reading a book about anti-gravity. It's impossible to put down!",
+    jokeText: "I'm reading a book about anti-gravity. It's impossible to put down!",
     jokeType: "Science",
   },
   {
     id: 94,
-    jokeText:
-      "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+    jokeText: "I told my wife she was drawing her eyebrows too high. She looked surprised.",
     jokeType: "Puns",
   },
   {
     id: 95,
-    jokeText:
-      "What did one ocean say to the other ocean? Nothing, they just waved.",
+    jokeText: "What did one ocean say to the other ocean? Nothing, they just waved.",
     jokeType: "Wordplay",
   },
   {
     id: 96,
-    jokeText:
-      "Why do we never tell secrets on a farm? Because the potatoes have eyes and the corn has ears.",
+    jokeText: "Why do we never tell secrets on a farm? Because the potatoes have eyes and the corn has ears.",
     jokeType: "Wordplay",
   },
   {
@@ -669,14 +619,12 @@ let jokes = [
   },
   {
     id: 98,
-    jokeText:
-      "Why don't some couples go to the gym? Because some relationships don't work out.",
+    jokeText: "Why don't some couples go to the gym? Because some relationships don't work out.",
     jokeType: "Puns",
   },
   {
     id: 99,
-    jokeText:
-      "Parallel lines have so much in common. It's a shame they'll never meet.",
+    jokeText: "Parallel lines have so much in common. It's a shame they'll never meet.",
     jokeType: "Math",
   },
   {
@@ -684,6 +632,7 @@ let jokes = [
     jokeText: "What do you call fake spaghetti? An impasta!",
     jokeType: "Food",
   },
-];
+]
 
-export default app;
+export default app
+
